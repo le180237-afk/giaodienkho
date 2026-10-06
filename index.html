@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prototype Dashboard Kho - Alert Fatigue</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Hiệu ứng chớp nháy khó chịu cho giao diện cũ */
+        @keyframes flash {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .animate-flash {
+            animation: flash 1s infinite;
+        }
+        
+        /* Hiệu ứng trượt mượt mà cho giao diện mới */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans h-screen flex flex-col">
+
+    <!-- Thanh công cụ trình diễn (Dành cho người thuyết trình) -->
+    <div class="bg-white p-4 shadow-md flex justify-between items-center z-50 relative">
+        <div>
+            <h1 class="text-xl font-bold text-gray-800">Demo: Giải quyết "Mệt mỏi cảnh báo"</h1>
+            <p class="text-sm text-gray-500">Thử nghiệm Tâm lý học hành vi trong UI</p>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="showOldUI()" id="btn-old" class="px-6 py-2 bg-red-600 text-white font-bold rounded-lg shadow-lg opacity-50 hover:opacity-100 transition-opacity">
+                Giao diện CŨ (Lỗi)
+            </button>
+            <button onclick="showNewUI()" id="btn-new" class="px-6 py-2 bg-green-600 text-white font-bold rounded-lg shadow-lg hover:opacity-100 transition-opacity">
+                Giao diện MỚI (Tối ưu)
+            </button>
+        </div>
+    </div>
+
+    <!-- KHU VỰC HIỂN THỊ -->
+    <div class="flex-1 p-6 flex justify-center items-center relative overflow-hidden bg-gray-200">
+        
+        <!-- Màn hình phần mềm giả lập -->
+        <div class="w-full max-w-4xl h-[600px] bg-slate-800 rounded-xl shadow-2xl overflow-hidden flex flex-col relative border-4 border-slate-700">
+            
+            <!-- Header của app -->
+            <div class="h-16 bg-slate-900 border-b border-slate-700 flex items-center justify-between px-6">
+                <div class="text-white font-bold text-xl tracking-wider">LOGI-PRO WMS <span class="text-xs font-normal text-slate-400">v2.0</span></div>
+                
+                <!-- Khu vực Notification (Sẽ thay đổi theo UI) -->
+                <div id="noti-area" class="relative">
+                    <!-- Icon chuông bình thường -->
+                    <svg class="w-7 h-7 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                    <!-- Số đếm Notification cho New UI -->
+                    <span id="noti-badge" class="hidden absolute -top-1 -right-1 bg-blue-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-slate-900">4</span>
+                </div>
+            </div>
+
+            <!-- Dashboard Content -->
+            <div class="flex-1 p-6 flex gap-6 relative">
+                <!-- Cột trái: Biểu đồ mô phỏng -->
+                <div class="w-2/3 flex flex-col gap-6">
+                    <div class="h-48 bg-slate-700 rounded-lg p-4 opacity-50">
+                        <div class="w-32 h-4 bg-slate-600 rounded mb-4"></div>
+                        <div class="flex items-end gap-2 h-24">
+                            <div class="w-10 bg-blue-500 h-16 rounded-t"></div>
+                            <div class="w-10 bg-blue-500 h-20 rounded-t"></div>
+                            <div class="w-10 bg-blue-500 h-10 rounded-t"></div>
+                            <div class="w-10 bg-blue-500 h-24 rounded-t"></div>
+                        </div>
+                    </div>
+                    <div class="flex-1 bg-slate-700 rounded-lg opacity-50 p-4">
+                        <div class="w-40 h-4 bg-slate-600 rounded mb-4"></div>
+                        <div class="space-y-3">
+                            <div class="w-full h-8 bg-slate-600 rounded"></div>
+                            <div class="w-full h-8 bg-slate-600 rounded"></div>
+                            <div class="w-full h-8 bg-slate-600 rounded"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cột phải: Khu vực Log / Hoạt động -->
+                <div class="w-1/3 bg-slate-700 rounded-lg p-4 opacity-50">
+                    <div class="w-24 h-4 bg-slate-600 rounded mb-4"></div>
+                </div>
+
+                <!-- LỚP OVERLAY CẢNH BÁO: GIAO DIỆN CŨ (Sai Tâm Lý Học) -->
+                <div id="old-ui-alerts" class="absolute inset-0 p-6 flex flex-col gap-4 pointer-events-none hidden">
+                    <!-- Cảnh báo 1: Rất vặt vãnh nhưng đỏ rực -->
+                    <div class="bg-red-600 text-white p-4 rounded-lg shadow-xl border-2 border-white animate-flash flex items-center justify-between pointer-events-auto">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">⚠️</span>
+                            <div>
+                                <h3 class="font-bold">CẢNH BÁO HỆ THỐNG</h3>
+                                <p class="text-sm">Máy in mã vạch kho A3 sắp hết giấy!</p>
+                            </div>
+                        </div>
+                        <button class="bg-red-800 px-3 py-1 rounded text-sm hover:bg-red-900">Đóng</button>
+                    </div>
+
+                    <!-- Cảnh báo 2: Rủi ro vừa phải nhưng vẫn đỏ rực -->
+                    <div class="bg-red-600 text-white p-4 rounded-lg shadow-xl border-2 border-white animate-flash flex items-center justify-between pointer-events-auto mt-2">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">⚠️</span>
+                            <div>
+                                <h3 class="font-bold">CẢNH BÁO VẬN HÀNH</h3>
+                                <p class="text-sm">Xe tải 29C-123.45 đến trễ 15 phút.</p>
+                            </div>
+                        </div>
+                        <button class="bg-red-800 px-3 py-1 rounded text-sm hover:bg-red-900">Đóng</button>
+                    </div>
+
+                    <!-- Cảnh báo 3: Rủi ro NGHIÊM TRỌNG bị chìm nghỉm giữa đống đỏ -->
+                    <div class="bg-red-600 text-white p-4 rounded-lg shadow-xl border-2 border-white animate-flash flex items-center justify-between pointer-events-auto mt-2">
+                        <div class="flex items-center gap-3">
+                            <span class="text-2xl">🔥</span>
+                            <div>
+                                <h3 class="font-bold">CẢNH BÁO KHẨN CẤP</h3>
+                                <p class="text-sm">Nhiệt độ kho đông lạnh B giảm đột ngột dưới mức an toàn!</p>
+                            </div>
+                        </div>
+                        <button class="bg-red-800 px-3 py-1 rounded text-sm hover:bg-red-900">Đóng</button>
+                    </div>
+                </div>
+
+                <!-- LỚP OVERLAY CẢNH BÁO: GIAO DIỆN MỚI (Tối ưu Tâm Lý Học) -->
+                <div id="new-ui-alerts" class="absolute inset-0 p-6 flex flex-col pointer-events-none fade-in hidden justify-center items-center bg-slate-900 bg-opacity-80 backdrop-blur-sm">
+                    
+                    <!-- CHỈ DUY NHẤT 1 CẢNH BÁO SINH TỬ ĐƯỢC HIỆN ĐỎ VÀ GIỮA MÀN HÌNH -->
+                    <div class="bg-white rounded-2xl shadow-2xl overflow-hidden w-full max-w-md pointer-events-auto transform scale-105 border-t-8 border-red-600">
+                        <div class="p-6 text-center">
+                            <div class="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg class="w-10 h-10 text-red-600 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                            </div>
+                            <h2 class="text-2xl font-black text-gray-900 mb-2">NGUY HIỂM KHO ĐÔNG LẠNH</h2>
+                            <p class="text-gray-600 mb-6">Nhiệt độ kho B đang ở mức <b class="text-red-600">-2°C</b> (Yêu cầu: -18°C). Hàng hóa có nguy cơ hỏng sau 30 phút nữa!</p>
+                            
+                            <div class="flex gap-3">
+                                <button onclick="alert('Đã báo kỹ thuật xử lý. Cảnh báo này không cho phép tắt ngang bằng nút X thông thường, chống việc tắt nhầm!')" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700 transition-colors">
+                                    ĐIỀU PHỐI KỸ THUẬT NGAY
+                                </button>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-6 py-3 border-t text-xs text-gray-500 text-center">
+                            Yêu cầu xác nhận 2 lớp để bỏ qua cảnh báo này.
+                        </div>
+                    </div>
+
+                    <!-- Ghi chú cho giảng viên hiểu -->
+                    <div class="absolute bottom-6 left-6 right-6 bg-blue-900 text-blue-100 p-4 rounded-lg border border-blue-700 pointer-events-auto shadow-lg text-sm">
+                        <span class="font-bold text-white">📌 Lời bình Tâm lý học:</span> 
+                        Các thông báo rác (hết giấy, xe trễ) đã bị tước quyền dùng màu Đỏ, chuyển thành màu xám và gom hết vào <b class="text-white">icon Cái chuông (góc trên phải)</b>. Não bộ nhân viên lúc này hoàn toàn không bị phân tâm, họ nhận thức ngay lập tức mức độ khẩn cấp của việc "Hỏng nhiệt độ".
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const oldAlerts = document.getElementById('old-ui-alerts');
+        const newAlerts = document.getElementById('new-ui-alerts');
+        const btnOld = document.getElementById('btn-old');
+        const btnNew = document.getElementById('btn-new');
+        const notiBadge = document.getElementById('noti-badge');
+
+        function showOldUI() {
+            // Hiển thị UI cũ
+            oldAlerts.classList.remove('hidden');
+            newAlerts.classList.add('hidden');
+            notiBadge.classList.add('hidden'); // Giấu thông báo số
+
+            // Đổi màu nút
+            btnOld.classList.remove('opacity-50');
+            btnNew.classList.add('opacity-50');
+            btnOld.classList.add('scale-105');
+            btnNew.classList.remove('scale-105');
+        }
+
+        function showNewUI() {
+            // Hiển thị UI mới
+            oldAlerts.classList.add('hidden');
+            newAlerts.classList.remove('hidden');
+            notiBadge.classList.remove('hidden'); // Hiện chuông báo thay vì chớp nháy
+
+            // Đổi màu nút
+            btnNew.classList.remove('opacity-50');
+            btnOld.classList.add('opacity-50');
+            btnNew.classList.add('scale-105');
+            btnOld.classList.remove('scale-105');
+        }
+
+        // Mặc định load vào Giao diện mới luôn để tạo ấn tượng tốt
+        window.onload = () => {
+            showNewUI();
+        }
+    </script>
+</body>
+</html>
